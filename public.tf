@@ -64,7 +64,7 @@ resource "aws_route" "public" {
 
 resource "aws_route_table_association" "public" {
   count          = var.enabled == false && signum(length(var.vpc_default_route_table_id)) == 1 ? 0 : length(var.availability_zones)
-  subnet_id      = element(aws_subnet.public.*.id, count.index)
+  subnet_id      = element(concat(aws_subnet.public.*.id,list("")), count.index)
   route_table_id = aws_route_table.public[0].id
 }
 
