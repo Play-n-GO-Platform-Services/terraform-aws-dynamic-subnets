@@ -2,6 +2,7 @@ module "private_label" {
   source     = "git::https://github.com/Play-n-GO-Platform-Services/terraform-null-label.git?ref=playngoplatformv1.0"
   context    = module.label.context
   attributes = compact(concat(module.label.attributes, ["private"]))
+  enabled    = var.enabled
 
   tags = merge(
     module.label.tags,
@@ -14,7 +15,7 @@ locals {
 }
 
 resource "aws_subnet" "private" {
-  count             = length(var.availability_zones)
+  count             = var.enabled ? length(var.availability_zones) : 0
   vpc_id            = data.aws_vpc.default.id
   availability_zone = element(var.availability_zones, count.index)
 
@@ -47,7 +48,7 @@ resource "aws_subnet" "private" {
 }
 
 resource "aws_route_table" "private" {
-  count  = length(var.availability_zones)
+  count  = var.enabled ? length(var.availability_zones) : 0
   vpc_id = data.aws_vpc.default.id
 
   tags = merge(
@@ -68,14 +69,14 @@ resource "aws_route_table" "private" {
 }
 
 resource "aws_route_table_association" "private" {
-  count = length(var.availability_zones)
+  count = var.enabled ? length(var.availability_zones) : 0
 
   subnet_id      = element(aws_subnet.private.*.id, count.index)
   route_table_id = element(aws_route_table.private.*.id, count.index)
 }
 
 resource "aws_network_acl" "private" {
-  count      = signum(length(var.private_network_acl_id)) == 0 ? 1 : 0
+  count      = var.enabled == true && signum(length(var.private_network_acl_id)) == 0 ? 1 : 0
   vpc_id     = var.vpc_id
   subnet_ids = aws_subnet.private.*.id
 

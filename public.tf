@@ -2,7 +2,7 @@ module "public_label" {
   source     = "git::https://github.com/Play-n-GO-Platform-Services/terraform-null-label.git?ref=playngoplatformv1.0"
   context    = module.label.context
   attributes = compact(concat(module.label.attributes, ["public"]))
-
+  enabled    = var.enabled
   tags = merge(
     module.label.tags,
     map(var.subnet_type_tag_key, format(var.subnet_type_tag_value_format, "public"))
@@ -14,7 +14,7 @@ locals {
 }
 
 resource "aws_subnet" "public" {
-  count             = length(var.availability_zones)
+  count             = var.enabled ? length(var.availability_zones) : 0
   vpc_id            = data.aws_vpc.default.id
   availability_zone = element(var.availability_zones, count.index)
 
@@ -49,33 +49,33 @@ resource "aws_subnet" "public" {
 }
 
 resource "aws_route_table" "public" {
-  count  = signum(length(var.vpc_default_route_table_id)) == 1 ? 0 : 1
+  count  = var.enabled == false && signum(length(var.vpc_default_route_table_id)) == 1 ? 0 : 1
   vpc_id = data.aws_vpc.default.id
 
   tags = module.public_label.tags
 }
 
 resource "aws_route" "public" {
-  count                  = signum(length(var.vpc_default_route_table_id)) == 1 ? 0 : 1
+  count                  = var.enabled == false && signum(length(var.vpc_default_route_table_id)) == 1 ? 0 : 1
   route_table_id         = join("", aws_route_table.public.*.id)
   destination_cidr_block = "0.0.0.0/0"
   gateway_id             = var.igw_id
 }
 
 resource "aws_route_table_association" "public" {
-  count          = signum(length(var.vpc_default_route_table_id)) == 1 ? 0 : length(var.availability_zones)
+  count          = var.enabled == false && signum(length(var.vpc_default_route_table_id)) == 1 ? 0 : length(var.availability_zones)
   subnet_id      = element(aws_subnet.public.*.id, count.index)
   route_table_id = aws_route_table.public[0].id
 }
 
 resource "aws_route_table_association" "public_default" {
-  count          = signum(length(var.vpc_default_route_table_id)) == 1 ? length(var.availability_zones) : 0
+  count          = var.enabled == true && signum(length(var.vpc_default_route_table_id)) == 1 ? length(var.availability_zones) : 0
   subnet_id      = element(aws_subnet.public.*.id, count.index)
   route_table_id = var.vpc_default_route_table_id
 }
 
 resource "aws_network_acl" "public" {
-  count      = signum(length(var.public_network_acl_id)) == 0 ? 1 : 0
+  count      = var.enabled == true && signum(length(var.public_network_acl_id)) == 0 ? 1 : 0
   vpc_id     = var.vpc_id
   subnet_ids = aws_subnet.public.*.id
 

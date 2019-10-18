@@ -76,3 +76,9 @@ variable "map_public_ip_on_launch" {
   default     = true
   description = "Instances launched into a public subnet should be assigned a public IP address"
 }
+
+variable "enabled" {
+  type = bool
+  default = true
+  description = " The resources in the module are created if the flag is enabled"
+}

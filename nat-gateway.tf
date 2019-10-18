@@ -2,6 +2,7 @@ module "nat_label" {
   source     = "git::https://github.com/Play-n-GO-Platform-Services/terraform-null-label.git?ref=playngoplatformv1.0"
   context    = module.label.context
   attributes = distinct(compact(concat(module.label.attributes, ["nat"])))
+  enabled    = var.enabled
 }
 
 locals {
@@ -9,7 +10,7 @@ locals {
 }
 
 resource "aws_eip" "default" {
-  count = local.nat_gateways_count
+  count = var.enabled ? local.nat_gateways_count : 0
   vpc   = true
 
   tags = merge(
@@ -34,7 +35,7 @@ resource "aws_eip" "default" {
 }
 
 resource "aws_nat_gateway" "default" {
-  count         = local.nat_gateways_count
+  count         = var.enabled ? local.nat_gateways_count : 0
   allocation_id = element(aws_eip.default.*.id, count.index)
   subnet_id     = element(aws_subnet.public.*.id, count.index)
 
@@ -60,7 +61,7 @@ resource "aws_nat_gateway" "default" {
 }
 
 resource "aws_route" "default" {
-  count                  = local.nat_gateways_count
+  count                  = var.enabled ? local.nat_gateways_count : 0
   route_table_id         = element(aws_route_table.private.*.id, count.index)
   nat_gateway_id         = element(aws_nat_gateway.default.*.id, count.index)
   destination_cidr_block = "0.0.0.0/0"

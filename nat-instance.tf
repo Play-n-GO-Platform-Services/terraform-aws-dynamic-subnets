@@ -2,6 +2,7 @@ module "nat_instance_label" {
   source     = "git::https://github.com/Play-n-GO-Platform-Services/terraform-null-label.git?ref=playngoplatformv1.0"
   context    = module.label.context
   attributes = distinct(compact(concat(module.label.attributes, ["nat", "instance"])))
+  enabled    = var.enabled
 }
 
 locals {
@@ -10,7 +11,7 @@ locals {
 }
 
 resource "aws_security_group" "nat_instance" {
-  count       = var.nat_instance_enabled ? 1 : 0
+  count       = var.enabled == true && var.nat_instance_enabled == true ? 1 : 0
   name        = module.nat_instance_label.id
   description = "Security Group for NAT Instance"
   vpc_id      = var.vpc_id
@@ -18,7 +19,7 @@ resource "aws_security_group" "nat_instance" {
 }
 
 resource "aws_security_group_rule" "nat_instance_egress" {
-  count             = var.nat_instance_enabled ? 1 : 0
+  count             = var.enabled == true && var.nat_instance_enabled == true ? 1 : 0
   description       = "Allow all egress traffic"
   from_port         = 0
   to_port           = 0
@@ -29,7 +30,7 @@ resource "aws_security_group_rule" "nat_instance_egress" {
 }
 
 resource "aws_security_group_rule" "nat_instance_ingress" {
-  count             = var.nat_instance_enabled ? 1 : 0
+  count             = var.enabled == true && var.nat_instance_enabled == true ? 1 : 0
   description       = "Allow ingress traffic from the VPC CIDR block"
   from_port         = 0
   to_port           = 0
@@ -41,7 +42,7 @@ resource "aws_security_group_rule" "nat_instance_ingress" {
 
 // aws --region us-west-2 ec2 describe-images --owners amazon --filters Name="name",Values="amzn-ami-vpc-nat*" Name="virtualization-type",Values="hvm"
 data "aws_ami" "nat_instance" {
-  count       = var.nat_instance_enabled ? 1 : 0
+  count       = var.enabled == true && var.nat_instance_enabled == true ? 1 : 0
   most_recent = true
 
   filter {
@@ -61,7 +62,7 @@ data "aws_ami" "nat_instance" {
 // https://docs.aws.amazon.com/vpc/latest/userguide/VPC_NAT_Instance.html
 // https://dzone.com/articles/nat-instance-vs-nat-gateway
 resource "aws_instance" "nat_instance" {
-  count                  = local.nat_instance_count
+  count                  = var.enabled ? local.nat_instance_count : 0
   ami                    = join("", data.aws_ami.nat_instance.*.id)
   instance_type          = var.nat_instance_type
   subnet_id              = element(aws_subnet.public.*.id, count.index)
@@ -95,7 +96,7 @@ resource "aws_instance" "nat_instance" {
 }
 
 resource "aws_route" "nat_instance" {
-  count                  = local.nat_instance_count
+  count                  = var.enabled ? local.nat_instance_count : 0
   route_table_id         = element(aws_route_table.private.*.id, count.index)
   instance_id            = element(aws_instance.nat_instance.*.id, count.index)
   destination_cidr_block = "0.0.0.0/0"
