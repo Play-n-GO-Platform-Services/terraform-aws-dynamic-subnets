@@ -10,7 +10,7 @@ module "public_label" {
 }
 
 locals {
-  public_subnet_count = var.max_subnet_count == 0 ? length(concat(element(data.aws_availability_zones.available.*.names,list("")),0)) : var.max_subnet_count
+  public_subnet_count = var.max_subnet_count == 0 ? length(element(concat(data.aws_availability_zones.available.*.names,list("")),0)) : var.max_subnet_count
 }
 
 resource "aws_subnet" "public" {
