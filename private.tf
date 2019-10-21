@@ -11,7 +11,7 @@ module "private_label" {
 }
 
 locals {
-  private_subnet_count = var.max_subnet_count == 0 ? length(element(data.aws_availability_zones.available.*.names,0)) : var.max_subnet_count
+  private_subnet_count = var.max_subnet_count == 0 ? length(element(concat(data.aws_availability_zones.available.*.names,list("")),0)) : var.max_subnet_count
 }
 
 resource "aws_subnet" "private" {

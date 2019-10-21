@@ -7,7 +7,7 @@ module "nat_instance_label" {
 
 locals {
   nat_instance_count = var.nat_instance_enabled ? length(var.availability_zones) : 0
-  cidr_block         = var.cidr_block != "" ? var.cidr_block : element(data.aws_vpc.default.*.cidr_block,0)
+  cidr_block         = var.cidr_block != "" ? var.cidr_block : element(concat(data.aws_vpc.default.*.cidr_block,list("")),0)
 }
 
 resource "aws_security_group" "nat_instance" {

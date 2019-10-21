@@ -10,7 +10,7 @@ module "public_label" {
 }
 
 locals {
-  public_subnet_count = var.max_subnet_count == 0 ? length(element(data.aws_availability_zones.available.*.names,0)) : var.max_subnet_count
+  public_subnet_count = var.max_subnet_count == 0 ? length(concat(element(data.aws_availability_zones.available.*.names,list("")),0)) : var.max_subnet_count
 }
 
 resource "aws_subnet" "public" {
@@ -50,7 +50,7 @@ resource "aws_subnet" "public" {
 
 resource "aws_route_table" "public" {
   count  = var.enabled == false && signum(length(var.vpc_default_route_table_id)) == 1 ? 0 : 1
-  vpc_id = element(data.aws_vpc.default.*.id,0)
+  vpc_id = element(concat(data.aws_vpc.default.*.id,list("")),0)
   tags = module.public_label.tags
 }
 
