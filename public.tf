@@ -51,7 +51,6 @@ resource "aws_subnet" "public" {
 resource "aws_route_table" "public" {
   count  = var.enabled == false && signum(length(var.vpc_default_route_table_id)) == 1 ? 0 : 1
   vpc_id = data.aws_vpc.default.id
-
   tags = module.public_label.tags
 }
 
