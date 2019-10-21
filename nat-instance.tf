@@ -6,7 +6,7 @@ module "nat_instance_label" {
 }
 
 output "cidrblock" {
-  value = data.aws_vpc.default.cidr_block
+  value = element(data.aws_vpc.default.*.cidr_block,0)
 }
 
 locals {
