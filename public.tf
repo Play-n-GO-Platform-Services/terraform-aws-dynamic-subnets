@@ -15,11 +15,11 @@ locals {
 
 resource "aws_subnet" "public" {
   count             = var.enabled ? length(var.availability_zones) : 0
-  vpc_id            = data.aws_vpc.default.id
+  vpc_id            = element(data.aws_vpc.default.*.id,0)
   availability_zone = element(var.availability_zones, count.index)
 
   cidr_block = cidrsubnet(
-    signum(length(var.cidr_block)) == 1 ? var.cidr_block : data.aws_vpc.default.cidr_block,
+    signum(length(var.cidr_block)) == 1 ? var.cidr_block : element(data.aws_vpc.default.*.cidr_block,0),
     ceil(log(local.public_subnet_count * 2, 2)),
     local.public_subnet_count + count.index
   )
