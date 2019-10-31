@@ -49,20 +49,20 @@ resource "aws_subnet" "public" {
 }
 
 resource "aws_route_table" "public" {
-  count  = (var.enabled == false && signum(length(var.vpc_default_route_table_id)) == 1) ? 0 : 1
+  count  = (var.enabled == false || signum(length(var.vpc_default_route_table_id)) == 1) ? 0 : 1
   vpc_id = element(concat(data.aws_vpc.default.*.id,list("")),0)
   tags = module.public_label.tags
 }
 
 resource "aws_route" "public" {
-  count                  = var.enabled == false && signum(length(var.vpc_default_route_table_id)) == 1 ? 0 : 1
+  count                  = (var.enabled == false || signum(length(var.vpc_default_route_table_id)) == 1) ? 0 : 1
   route_table_id         = join("", aws_route_table.public.*.id)
   destination_cidr_block = "0.0.0.0/0"
   gateway_id             = var.igw_id
 }
 
 resource "aws_route_table_association" "public" {
-  count          = var.enabled == false && signum(length(var.vpc_default_route_table_id)) == 1 ? 0 : length(var.availability_zones)
+  count          = (var.enabled == false || signum(length(var.vpc_default_route_table_id)) == 1) ? 0 : length(var.availability_zones)
   subnet_id      = element(concat(aws_subnet.public.*.id,list("")), count.index)
   route_table_id = aws_route_table.public[0].id
 }
