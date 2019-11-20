@@ -16,11 +16,11 @@ locals {
 
 resource "aws_subnet" "private" {
   count             = var.enabled ? length(var.availability_zones) : 0
-  vpc_id            = element(data.aws_vpc.default.*.id,0)
+  vpc_id            = element(data.aws_vpc.emr.*.id,0)
   availability_zone = element(var.availability_zones, count.index)
 
   cidr_block = cidrsubnet(
-    signum(length(var.cidr_block)) == 1 ? var.cidr_block : element(data.aws_vpc.default.*.cidr_block,0),
+    signum(length(var.cidr_block)) == 1 ? var.cidr_block : element(data.aws_vpc.emr.*.cidr_block,0),
     ceil(log(local.private_subnet_count * 2, 2)),
     count.index
   )
@@ -49,7 +49,7 @@ resource "aws_subnet" "private" {
 
 resource "aws_route_table" "private" {
   count  = var.enabled ? length(var.availability_zones) : 0
-  vpc_id = element(data.aws_vpc.default.*.id,0)
+  vpc_id = element(data.aws_vpc.emr.*.id,0)
 
   tags = merge(
     module.private_label.tags,
