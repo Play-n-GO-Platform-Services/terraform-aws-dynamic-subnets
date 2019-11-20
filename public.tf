@@ -15,11 +15,11 @@ locals {
 
 resource "aws_subnet" "public" {
   count             = var.enabled ? length(var.availability_zones) : 0
-  vpc_id            = element(data.aws_vpc.default.*.id,0)
+  vpc_id            = element(data.aws_vpc.emr.*.id,0)
   availability_zone = element(var.availability_zones, count.index)
 
   cidr_block = cidrsubnet(
-    signum(length(var.cidr_block)) == 1 ? var.cidr_block : element(data.aws_vpc.default.*.cidr_block,0),
+    signum(length(var.cidr_block)) == 1 ? var.cidr_block : element(data.aws_vpc.emr.*.cidr_block,0),
     ceil(log(local.public_subnet_count * 2, 2)),
     local.public_subnet_count + count.index
   )
@@ -50,7 +50,7 @@ resource "aws_subnet" "public" {
 
 resource "aws_route_table" "public" {
   count  = (var.enabled == false || signum(length(var.vpc_default_route_table_id)) == 1) ? 0 : 1
-  vpc_id = element(concat(data.aws_vpc.default.*.id,list("")),0)
+  vpc_id = element(concat(data.aws_vpc.emr.*.id,list("")),0)
   tags = module.public_label.tags
 }
 
@@ -98,4 +98,3 @@ resource "aws_network_acl" "public" {
 
   tags = module.public_label.tags
 }
-
