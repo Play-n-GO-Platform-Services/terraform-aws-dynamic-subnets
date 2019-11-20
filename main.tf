@@ -5,7 +5,7 @@ locals {
 }
 
 
-data "aws_vpc" "emr" {
+data "aws_vpc" "default" {
   count = local.source_count
   id = var.vpc_id
 }
